@@ -39,7 +39,7 @@ export const defaultSections: Section[] = [
   {
     id: 'overview',
     type: 'text',
-    title: 'Overview',
+    title: 'Project Description',
     visible: true,
     content: 'Writing comprehensive, well-structured documentation is arguably the most critical component of maintaining a successful open-source project. **ReadmeGenie** eliminates the friction of formatting raw markdown by providing developers with a fluid, strictly visual drag-and-drop interface. By abstracting away the syntax layer, ReadmeGenie allows maintainers to focus exclusively on content quality while enforcing an enterprise-grade structural standard.',
   },
