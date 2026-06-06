@@ -1,6 +1,22 @@
-import React, { useState } from 'react';
-import type { ProjectConfig } from '../types';
-import { ChevronDown, ChevronRight, Plus, Trash2, GripVertical } from 'lucide-react';
+import { useState } from 'react';
+import type { ProjectConfig, Section } from '../types';
+import { SortableSection } from './SortableSection';
+import { Plus, GripVertical, Trash2 } from 'lucide-react';
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface Props {
   config: ProjectConfig;
@@ -10,202 +26,208 @@ interface Props {
 const POPULAR_TECH = [
   'React', 'Vue', 'Angular', 'Svelte',
   'TypeScript', 'JavaScript', 'Python', 'Go',
-  'Tailwind CSS', 'Bootstrap', 'Material UI',
-  'Node.js', 'Express', 'Django', 'Spring',
-  'Docker', 'Kubernetes', 'AWS', 'Vercel'
+  'Tailwind CSS', 'Bootstrap', 'Node.js', 'Express',
+  'Docker', 'AWS', 'Vercel', 'PostgreSQL'
 ];
 
 export function EditorForm({ config, setConfig }: Props) {
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    general: true,
-    features: true,
-    tech: false,
-    setup: false,
-  });
+  const [openSectionId, setOpenSectionId] = useState<string | null>(config.sections[0]?.id || null);
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const updateField = (field: keyof ProjectConfig, value: any) => {
-    setConfig(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddFeature = () => {
-    updateField('features', [...config.features, '']);
-  };
-
-  const handleUpdateFeature = (index: number, value: string) => {
-    const newFeatures = [...config.features];
-    newFeatures[index] = value;
-    updateField('features', newFeatures);
-  };
-
-  const handleRemoveFeature = (index: number) => {
-    const newFeatures = config.features.filter((_, i) => i !== index);
-    updateField('features', newFeatures);
-  };
-
-  const toggleTech = (tech: string) => {
-    if (config.techStack.includes(tech)) {
-      updateField('techStack', config.techStack.filter(t => t !== tech));
-    } else {
-      updateField('techStack', [...config.techStack, tech]);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setConfig((prev) => {
+        const oldIndex = prev.sections.findIndex(s => s.id === active.id);
+        const newIndex = prev.sections.findIndex(s => s.id === over.id);
+        return {
+          ...prev,
+          sections: arrayMove(prev.sections, oldIndex, newIndex)
+        };
+      });
     }
   };
 
-  const AccordionHeader = ({ id, title, icon }: { id: string, title: string, icon: string }) => (
-    <button
-      type="button"
-      onClick={() => toggleSection(id)}
-      className="flex items-center justify-between w-full p-4 bg-card hover:bg-border/50 transition-colors border-b border-border text-left"
-    >
-      <div className="flex items-center gap-2 font-semibold">
-        <span className="text-xl">{icon}</span>
-        {title}
-      </div>
-      {openSections[id] ? <ChevronDown size={20} className="text-textMuted" /> : <ChevronRight size={20} className="text-textMuted" />}
-    </button>
-  );
+  const toggleSectionOpen = (id: string) => {
+    setOpenSectionId(prev => prev === id ? null : id);
+  };
+
+  const updateSection = (id: string, updates: Partial<Section>) => {
+    setConfig(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === id ? { ...s, ...updates } : s)
+    }));
+  };
+
+  const deleteSection = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this section?')) {
+      setConfig(prev => ({
+        ...prev,
+        sections: prev.sections.filter(s => s.id !== id)
+      }));
+    }
+  };
+
+  // Section Editors
+  const renderEditor = (section: Section) => {
+    if (section.type === 'text' || section.type === 'header') {
+      return (
+        <textarea
+          value={section.content || ''}
+          onChange={(e) => updateSection(section.id, { content: e.target.value })}
+          className="w-full h-40 bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-mono text-sm"
+          placeholder="Enter markdown content..."
+        />
+      );
+    }
+    
+    if (section.type === 'list') {
+      const items = section.listItems || [];
+      return (
+        <div className="space-y-3">
+          {items.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <GripVertical size={16} className="text-border" />
+              <input
+                type="text"
+                value={item}
+                onChange={(e) => {
+                  const newItems = [...items];
+                  newItems[idx] = e.target.value;
+                  updateSection(section.id, { listItems: newItems });
+                }}
+                className="flex-1 bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary transition-colors"
+                placeholder="List item..."
+              />
+              <button
+                onClick={() => {
+                  const newItems = items.filter((_, i) => i !== idx);
+                  updateSection(section.id, { listItems: newItems });
+                }}
+                className="p-2 text-textMuted hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => updateSection(section.id, { listItems: [...items, ''] })}
+            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-2"
+          >
+            <Plus size={16} /> Add Item
+          </button>
+        </div>
+      );
+    }
+
+    if (section.type === 'techStack' || section.type === 'badges') {
+      const selected = section.techItems || [];
+      const options = section.type === 'badges' ? ['MIT', 'Apache-2.0', 'GPL-3.0', 'PRs Welcome', 'Stars'] : POPULAR_TECH;
+      const allOptions = Array.from(new Set([...options, ...selected]));
+      
+      return (
+        <div>
+          <p className="text-sm text-textMuted mb-3">Click to toggle badges:</p>
+          <div className="flex flex-wrap gap-2">
+            {allOptions.map(tech => (
+              <button
+                key={tech}
+                onClick={() => {
+                  if (selected.includes(tech)) {
+                    updateSection(section.id, { techItems: selected.filter(t => t !== tech) });
+                  } else {
+                    updateSection(section.id, { techItems: [...selected, tech] });
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-md text-sm border transition-all ${
+                  selected.includes(tech)
+                    ? 'bg-primary/20 border-primary text-primary'
+                    : 'bg-card border-border text-textMuted hover:border-textMuted/50'
+                }`}
+              >
+                {tech}
+              </button>
+            ))}
+          </div>
+          
+          {(section.type === 'techStack' || section.type === 'badges') && (
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+              <input
+                id={`new-tech-${section.id}`}
+                type="text"
+                placeholder={section.type === 'badges' ? "Custom badge" : "Custom tech (e.g. Next.js)"}
+                className="bg-background border border-border rounded-md px-3 py-1.5 text-sm text-textMain focus:outline-none focus:border-primary transition-colors flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById(`add-tech-btn-${section.id}`)?.click();
+                  }
+                }}
+              />
+              <button
+                id={`add-tech-btn-${section.id}`}
+                onClick={() => {
+                  const input = document.getElementById(`new-tech-${section.id}`) as HTMLInputElement;
+                  const val = input?.value.trim();
+                  if (val && !selected.includes(val)) {
+                    updateSection(section.id, { techItems: [...selected, val] });
+                    if (input) input.value = '';
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                <Plus size={16} /> Add
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (section.type === 'toc') {
+      return <p className="text-sm text-textMuted italic">The Table of Contents is auto-generated based on the visible sections.</p>;
+    }
+
+    return null;
+  };
 
   return (
-    <div className="space-y-4">
-      {/* General Section */}
-      <div className="rounded-lg border border-border overflow-hidden bg-background">
-        <AccordionHeader id="general" title="General Info" icon="📝" />
-        {openSections.general && (
-          <div className="p-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-textMuted mb-1">Project Title</label>
-              <input
-                type="text"
-                value={config.title}
-                onChange={e => updateField('title', e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                placeholder="ReadmeGenie"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-textMuted mb-1">Tagline</label>
-              <input
-                type="text"
-                value={config.tagline}
-                onChange={e => updateField('tagline', e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary transition-colors"
-                placeholder="A magical markdown generator"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-textMuted mb-1">License</label>
-              <select
-                value={config.license}
-                onChange={e => updateField('license', e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary transition-colors appearance-none"
-              >
-                <option value="MIT">MIT</option>
-                <option value="Apache-2.0">Apache 2.0</option>
-                <option value="GPL-3.0">GPL 3.0</option>
-                <option value="Unlicense">Unlicense</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Tech Stack Section */}
-      <div className="rounded-lg border border-border overflow-hidden bg-background">
-        <AccordionHeader id="tech" title="Tech Stack" icon="🛠️" />
-        {openSections.tech && (
-          <div className="p-4">
-            <p className="text-sm text-textMuted mb-3">Click to toggle popular technologies:</p>
-            <div className="flex flex-wrap gap-2">
-              {POPULAR_TECH.map(tech => (
-                <button
-                  key={tech}
-                  onClick={() => toggleTech(tech)}
-                  className={`px-3 py-1.5 rounded-md text-sm border transition-all ${
-                    config.techStack.includes(tech)
-                      ? 'bg-primary/20 border-primary text-primary'
-                      : 'bg-card border-border text-textMuted hover:border-textMuted/50'
-                  }`}
-                >
-                  {tech}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Features Section */}
-      <div className="rounded-lg border border-border overflow-hidden bg-background">
-        <AccordionHeader id="features" title="Features" icon="✨" />
-        {openSections.features && (
-          <div className="p-4 space-y-3">
-            {config.features.map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <GripVertical size={18} className="text-border cursor-grab" />
-                <input
-                  type="text"
-                  value={feature}
-                  onChange={e => handleUpdateFeature(idx, e.target.value)}
-                  className="flex-1 bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary transition-colors"
-                  placeholder="Enter a cool feature..."
-                />
-                <button
-                  onClick={() => handleRemoveFeature(idx)}
-                  className="p-2 text-textMuted hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ))}
-            <button
-              onClick={handleAddFeature}
-              className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-2"
+    <div className="w-full pb-10">
+      <p className="text-sm text-textMuted mb-4 italic">
+        Drag to reorder sections. Toggle the eye icon to hide from preview.
+      </p>
+      
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext 
+          items={config.sections.map(s => s.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {config.sections.map(section => (
+            <SortableSection
+              key={section.id}
+              id={section.id}
+              title={section.title}
+              visible={section.visible}
+              isOpen={openSectionId === section.id}
+              onToggleOpen={() => toggleSectionOpen(section.id)}
+              onToggleVisible={() => updateSection(section.id, { visible: !section.visible })}
+              onDelete={() => deleteSection(section.id)}
             >
-              <Plus size={16} /> Add Feature
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Setup Section */}
-      <div className="rounded-lg border border-border overflow-hidden bg-background">
-        <AccordionHeader id="setup" title="Installation & Usage" icon="🚀" />
-        {openSections.setup && (
-          <div className="p-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-textMuted mb-1">Installation Command</label>
-              <textarea
-                value={config.installation}
-                onChange={e => updateField('installation', e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary transition-colors font-mono text-sm h-20"
-                placeholder="npm install package-name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-textMuted mb-1">Usage Example</label>
-              <textarea
-                value={config.usage}
-                onChange={e => updateField('usage', e.target.value)}
-                className="w-full bg-card border border-border rounded-md px-3 py-2 text-textMain focus:outline-none focus:border-primary transition-colors font-mono text-sm h-24"
-                placeholder="import { init } from 'package-name';"
-              />
-            </div>
-            <div className="flex items-center gap-2 mt-4">
-              <input
-                type="checkbox"
-                id="contributing"
-                checked={config.contributing}
-                onChange={e => updateField('contributing', e.target.checked)}
-                className="w-4 h-4 rounded border-border bg-card text-primary focus:ring-primary focus:ring-offset-background"
-              />
-              <label htmlFor="contributing" className="text-sm text-textMuted">Include "Contributing" section</label>
-            </div>
-          </div>
-        )}
-      </div>
+              {renderEditor(section)}
+            </SortableSection>
+          ))}
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }

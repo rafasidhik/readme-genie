@@ -1,71 +1,50 @@
 import type { ProjectConfig } from '../types';
 
 export function buildMarkdown(config: ProjectConfig): string {
-  const {
-    title,
-    tagline,
-    license,
-    techStack,
-    features,
-    installation,
-    usage,
-    contributing,
-    sectionOrder
-  } = config;
-
-  const sections: Record<string, string> = {};
-
-  sections['title'] = `# ${title || 'Project Title'}`;
-  sections['tagline'] = tagline ? `> ${tagline}` : '';
+  const visibleSections = config.sections.filter(s => s.visible);
   
-  // Badges
-  const licenseBadge = `![License: ${license}](https://img.shields.io/badge/License-${license.replace('-', '%20')}-blue.svg)`;
-  sections['badges'] = licenseBadge;
-
-  // Features
-  if (features.length > 0) {
-    sections['features'] = `## ✨ Features\n\n${features.map((f: string) => `- ${f}`).join('\n')}`;
-  } else {
-    sections['features'] = '';
-  }
-
-  // Tech Stack
-  if (techStack.length > 0) {
-    const badges = techStack.map((tech: string) => 
-      `![${tech}](https://img.shields.io/badge/${encodeURIComponent(tech)}-09090b?style=for-the-badge&logo=${encodeURIComponent(tech.toLowerCase())}&logoColor=white)`
-    ).join(' ');
-    sections['techStack'] = `## 🛠️ Tech Stack\n\n${badges}`;
-  } else {
-    sections['techStack'] = '';
-  }
-
-  // Installation
-  if (installation) {
-    sections['installation'] = `## 🚀 Installation\n\n\`\`\`bash\n${installation}\n\`\`\``;
-  } else {
-    sections['installation'] = '';
-  }
-
-  // Usage
-  if (usage) {
-    sections['usage'] = `## 💡 Usage\n\n\`\`\`javascript\n${usage}\n\`\`\``;
-  } else {
-    sections['usage'] = '';
-  }
-
-  // Contributing
-  if (contributing) {
-    sections['contributing'] = `## 🤝 Contributing\n\nContributions, issues and feature requests are welcome!\nFeel free to check [issues page](#).`;
-  } else {
-    sections['contributing'] = '';
-  }
-
-  // License
-  sections['license'] = `## 📝 License\n\nThis project is [${license}](LICENSE) licensed.`;
-
-  // Combine sections based on order
-  return sectionOrder
-    .map((key: string) => sections[key])
-    .filter((section: string) => section && section.trim() !== '')
-    .join('\n\n');
+  return visibleSections.map(section => {
+    switch (section.type) {
+      case 'header':
+        return section.content || '';
+        
+      case 'badges':
+        if (!section.techItems || section.techItems.length === 0) return '';
+        const badges = section.techItems.map(b => {
+          if (b === 'MIT') return `![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)`;
+          if (b === 'Apache-2.0') return `![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)`;
+          if (b === 'GPL-3.0') return `![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)`;
+          if (b === 'PRs Welcome') return `![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)`;
+          if (b === 'Stars') return `![GitHub stars](https://img.shields.io/github/stars/yourusername/yourrepo.svg)`;
+          return `![${b}](https://img.shields.io/badge/${encodeURIComponent(b)}-brightgreen.svg)`;
+        }).join(' ');
+        return badges;
+        
+      case 'toc':
+        // Generate TOC based on all visible sections that have titles (except header, badges, toc)
+        const tocItems = visibleSections
+          .filter(s => !['header', 'badges', 'toc'].includes(s.type) && s.title)
+          .map(s => `- [${s.title}](#${s.title.toLowerCase().replace(/\s+/g, '-')})`)
+          .join('\n');
+        return `## Table of Contents\n\n${tocItems}`;
+        
+      case 'text':
+        if (!section.content) return '';
+        return `## ${section.title}\n\n${section.content}`;
+        
+      case 'list':
+        if (!section.listItems || section.listItems.length === 0) return '';
+        return `## ${section.title}\n\n${section.listItems.map(item => `- ${item}`).join('\n')}`;
+        
+      case 'techStack':
+        if (!section.techItems || section.techItems.length === 0) return '';
+        const techBadges = section.techItems.map(tech => 
+          `![${tech}](https://img.shields.io/badge/${encodeURIComponent(tech)}-09090b?style=for-the-badge&logo=${encodeURIComponent(tech.toLowerCase())}&logoColor=white)`
+        ).join(' ');
+        return `## ${section.title}\n\n${techBadges}`;
+        
+      default:
+        return '';
+    }
+  }).filter(content => content.trim() !== '').join('\n\n');
 }

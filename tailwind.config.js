@@ -4,15 +4,16 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        background: '#09090b',
-        card: '#18181b',
-        primary: '#3b82f6',
-        border: '#27272a',
-        textMain: '#f4f4f5',
-        textMuted: '#a1a1aa'
+        background: 'var(--color-background)',
+        card: 'var(--color-card)',
+        primary: 'var(--color-primary)',
+        border: 'var(--color-border)',
+        textMain: 'var(--color-text-main)',
+        textMuted: 'var(--color-text-muted)',
       }
     },
   },

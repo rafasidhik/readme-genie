@@ -9,8 +9,19 @@ import { EditorForm } from './components/EditorForm';
 
 function App() {
   const [config, setConfig] = useState<ProjectConfig>(() => {
-    const saved = localStorage.getItem('readme-genie-config');
-    return saved ? JSON.parse(saved) : defaultConfig;
+    try {
+      const saved = localStorage.getItem('readme-genie-config');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Check if it's the old version without modular sections
+        if (parsed.sections && Array.isArray(parsed.sections)) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse config", e);
+    }
+    return defaultConfig;
   });
 
   const [copied, setCopied] = useState(false);
@@ -62,15 +73,17 @@ function App() {
           </h1>
           <span className="text-xs bg-border px-2 py-0.5 rounded-full ml-2 text-textMuted">v1.0.0</span>
         </div>
-        <a 
-          href="https://github.com/rafasidhik/readme-genie" 
-          target="_blank" 
-          rel="noreferrer"
-          className="flex items-center gap-2 text-sm text-textMuted hover:text-textMain transition-colors bg-background px-3 py-1.5 rounded-md border border-border"
-        >
-          <Star size={16} className="text-yellow-400" />
-          <span>Star on GitHub</span>
-        </a>
+        <div className="flex items-center gap-3">
+          <a 
+            href="https://github.com/rafasidhik/readme-genie" 
+            target="_blank" 
+            rel="noreferrer"
+            className="flex items-center gap-2 text-sm text-textMuted hover:text-textMain transition-colors bg-background px-3 py-1.5 rounded-md border border-border"
+          >
+            <Star size={16} className="text-yellow-400" />
+            <span>Star on GitHub</span>
+          </a>
+        </div>
       </header>
 
       {/* Main Split Pane */}
@@ -118,7 +131,7 @@ function App() {
             </span>
           </div>
           <div className="flex-1 overflow-y-auto p-8">
-            <div className="prose prose-invert prose-blue max-w-none">
+            <div className="prose prose-invert prose-blue max-w-none prose-img:inline-block prose-img:m-1">
               <ReactMarkdown>{markdown}</ReactMarkdown>
             </div>
           </div>
