@@ -47,7 +47,8 @@ Writing comprehensive, well-structured documentation is arguably the most critic
 
 ## Screenshots / Demo
 
-`![Application Interface](./demo.png)`
+<!-- ![Application Interface](./demo.png) -->
+*(Replace this section with an actual screenshot or GIF of the ReadmeGenie interface in action)*
 
 ## Features
 
