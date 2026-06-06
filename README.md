@@ -52,6 +52,8 @@ Writing comprehensive, well-structured documentation is arguably the most critic
 ## Features
 
 - **Kinetic Drag-and-Drop Management:** Seamlessly construct complex documentation hierarchies using an intuitive, collision-optimized sorting interface powered by `@dnd-kit`.
+- **Responsive Split-Pane Interface:** Dynamically scale your editor and live-preview environments with a custom-engineered draggable partition handler.
+- **Auto-Centered Aesthetics Engine:** Seamlessly injects structural HTML alignment wrappers behind the scenes, allowing you to write pure markdown without muddying the editor.
 - **Comprehensive Modular Blueprints:** Shipped with 25 pre-configured, enterprise-ready documentation sections ranging from System Architectures to Security Policies.
 - **Persistent State Architecture:** Your configuration progress is instantaneously bound and preserved within your browser's local storage engine, guaranteeing zero data loss.
 - **Client-Side Exclusivity:** Zero backend dependencies ensure instantaneous rendering, immediate interactivity, and absolute data privacy.
@@ -120,6 +122,7 @@ Styling tokens and UI configurations are strictly managed via standard CSS varia
 - [x] Integrate the `react-markdown` live preview engine.
 - [x] Implement the `@dnd-kit` kinetic sorting matrices.
 - [x] Enforce a premium, developer-focused Dark Theme globally.
+- [x] Implement responsive resizable editor split-panes.
 - [ ] Implement Vibe-Coding Assist (AI-powered copywriting tooltips).
 - [ ] Establish support for custom `.md` blueprint importing.
 
