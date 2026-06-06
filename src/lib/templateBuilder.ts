@@ -6,7 +6,8 @@ export function buildMarkdown(config: ProjectConfig): string {
   return visibleSections.map(section => {
     switch (section.type) {
       case 'header':
-        return section.content || '';
+        if (!section.content) return '';
+        return `<div align="center">\n\n${section.content}\n\n</div>`;
         
       case 'badges':
         if (!section.techItems || section.techItems.length === 0) return '';

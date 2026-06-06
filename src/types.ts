@@ -21,7 +21,7 @@ export const defaultSections: Section[] = [
     type: 'header',
     title: 'Project Header',
     visible: true,
-    content: '<div align="center">\n  <h1>ReadmeGenie</h1>\n  <p><em>An elegant, highly interactive, and developer-focused markdown generator engineered to streamline open-source documentation.</em></p>\n</div>',
+    content: '# ReadmeGenie\n\n*An elegant, highly interactive, and developer-focused markdown generator engineered to streamline open-source documentation.*',
   },
   {
     id: 'badges',
