@@ -47,8 +47,7 @@ Writing comprehensive, well-structured documentation is arguably the most critic
 
 ## Screenshots / Demo
 
-<!-- ![Application Interface](./demo.png) -->
-*(Replace this section with an actual screenshot or GIF of the ReadmeGenie interface in action)*
+<img width="1916" height="999" alt="Screenshot 2026-06-06 203231" src="https://github.com/user-attachments/assets/d5894e6e-38e3-41ed-a79b-2cabbb97ec16" />
 
 ## Features
 
@@ -165,7 +164,7 @@ This software is distributed under the [MIT](LICENSE) License.
 
 ## Authors
 
-- **Rafa Sidhik** - [@rafasidhik](https://github.com/rafasidhik)
+- **Rafa Fathima M K** - [@rafasidhik](https://github.com/rafasidhik)
 
 ## Acknowledgements
 
