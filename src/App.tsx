@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { Copy, Download, RefreshCw, Code, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { ProjectConfig } from './types';
@@ -132,7 +133,7 @@ function App() {
           </div>
           <div className="flex-1 overflow-y-auto p-8">
             <div className="prose prose-invert prose-blue max-w-none prose-img:inline-block prose-img:m-1">
-              <ReactMarkdown>{markdown}</ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>{markdown}</ReactMarkdown>
             </div>
           </div>
         </section>

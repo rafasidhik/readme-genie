@@ -16,9 +16,9 @@ export function buildMarkdown(config: ProjectConfig): string {
           if (b === 'GPL-3.0') return `![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)`;
           if (b === 'PRs Welcome') return `![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)`;
           if (b === 'Stars') return `![GitHub stars](https://img.shields.io/github/stars/yourusername/yourrepo.svg)`;
-          return `![${b}](https://img.shields.io/badge/${encodeURIComponent(b)}-brightgreen.svg)`;
+          return `![${b}](https://img.shields.io/badge/${encodeURIComponent(b)}-09090b?style=for-the-badge&logo=${encodeURIComponent(b.toLowerCase())}&logoColor=white)`;
         }).join(' ');
-        return badges;
+        return `<div align="center">\n\n${badges}\n\n</div>`;
         
       case 'toc':
         // Generate TOC based on all visible sections that have titles (except header, badges, toc)
