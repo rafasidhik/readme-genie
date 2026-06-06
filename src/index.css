@@ -16,3 +16,12 @@
     @apply bg-background text-textMain antialiased transition-colors duration-300;
   }
 }
+
+@media (min-width: 1024px) {
+  .desktop-pane-left {
+    width: var(--pane-width, 50%) !important;
+  }
+  .desktop-pane-right {
+    width: calc(100% - var(--pane-width, 50%) - 0.5rem) !important;
+  }
+}

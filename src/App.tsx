@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { Copy, Download, RefreshCw, Code, Star } from 'lucide-react';
@@ -26,6 +26,41 @@ function App() {
   });
 
   const [copied, setCopied] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+      const containerWidth = containerRef.current.clientWidth;
+      const newWidth = (e.clientX / containerWidth) * 100;
+      if (newWidth > 20 && newWidth < 80) {
+        setLeftWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
 
   useEffect(() => {
     localStorage.setItem('readme-genie-config', JSON.stringify(config));
@@ -88,9 +123,13 @@ function App() {
       </header>
 
       {/* Main Split Pane */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <main 
+        ref={containerRef} 
+        className="flex-1 flex flex-col lg:flex-row overflow-hidden relative"
+        style={{ '--pane-width': `${leftWidth}%` } as React.CSSProperties}
+      >
         {/* Editor Form Pane */}
-        <section className="w-full lg:w-1/2 flex flex-col border-r border-border bg-background">
+        <section className="w-full desktop-pane-left flex flex-col border-b lg:border-b-0 lg:border-r border-border bg-background shrink-0">
           <div className="flex-1 overflow-y-auto p-6">
             <EditorForm config={config} setConfig={setConfig} />
           </div>
@@ -123,8 +162,16 @@ function App() {
           </div>
         </section>
 
+        {/* Resizer */}
+        <div 
+          className="hidden lg:flex w-2 cursor-col-resize hover:bg-primary/50 active:bg-primary transition-colors items-center justify-center relative z-10 shrink-0"
+          onMouseDown={() => setIsDragging(true)}
+        >
+          <div className="w-0.5 h-8 bg-border rounded-full pointer-events-none" />
+        </div>
+
         {/* Live Preview Pane */}
-        <section className="w-full lg:w-1/2 flex flex-col bg-[#0d1117] overflow-hidden">
+        <section className="w-full desktop-pane-right flex flex-col bg-[#0d1117] overflow-hidden shrink-0">
           <div className="h-10 border-b border-border bg-card flex items-center px-4 shrink-0">
             <span className="text-sm text-textMuted flex items-center gap-2">
               <Code size={16} />
