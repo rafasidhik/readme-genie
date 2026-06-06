@@ -31,7 +31,7 @@ const POPULAR_TECH = [
 ];
 
 export function EditorForm({ config, setConfig }: Props) {
-  const [openSectionId, setOpenSectionId] = useState<string | null>(config.sections[0]?.id || null);
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
